@@ -1,0 +1,42 @@
+﻿<Window x:Class="HomeMenuEditor3DSUI.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:HomeMenuEditor3DSUI"
+        mc:Ignorable="d"
+        Title="MainWindow" Height="450" Width="1580">
+    <StackPanel>
+        <Grid>
+            <ItemsControl Name="TitleGrid" ItemsSource="{Binding Titles}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <UniformGrid Columns="60"/>
+                        <!-- Set the desired number of columns -->
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Button Width="24" Height="24" Click="TitleButton_Click">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Image Source="{Binding IconPath}" Stretch="UniformToFill"/>
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <!-- Save Button -->
+            <Button Content="Save" Click="SaveButton_Click" HorizontalAlignment="Center" VerticalAlignment="Bottom"/>
+            <Button Content="Reload" Click="ReloadButton_Click" HorizontalAlignment="Center" VerticalAlignment="Bottom"/>
+        </Grid>
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Bottom">
+        <!-- Save Button -->
+        <Button Content="Save" Click="SaveButton_Click"/>
+        <!-- Reload Button -->
+        <Button Content="Reload" Click="ReloadButton_Click"/>
+        </StackPanel>
+    </StackPanel>
+</Window>
