@@ -8,15 +8,24 @@
         byte[] launcerbytes = File.ReadAllBytes(launcherDatFilePath);
         byte[] savedatabytes = File.ReadAllBytes(savedataFilePath);
         DataParser launcherDat = new DataParser();
+     
+        //var firstfolder=launcherDat.Folders.First();
+        //launcherDat.RenameFolder(firstfolder.FolderNumber, "testfolder");
         launcherDat.ReadLauncherData(launcerbytes);
-
         launcherDat.ReadSaveData(savedatabytes);
-        launcherDat.DisplaySystemTitlesNotInFolders();
-        launcherDat.DisplaySDTitlesNotInFolders();
         launcherDat.DisplayFoldersAndTitles();
-
-        launcherDat.DisplayCardTitle();
-        launcherDat.SwapTitles(launcherDat.SystemTitles.First(), launcherDat.SDTitles.First());
-        launcherDat.SwapTitles(launcherDat.SystemTitles.First(), launcherDat.SDTitles.First());
+        // var x=launcherDat.GetUnusedPosition();
+        var title = launcherDat.SDTitles.First();
+        var title2 = launcherDat.SDTitles[1];
+        var folder= launcherDat.CreateFolder("2es222lder", 31);
+        launcherDat.AddTitleToFolder(folder, title); 
+       // launcherDat.SwapTitles(title, title2);
+        launcherDat.SaveLauncherData(launcerbytes);
+        launcherDat.SaveSaveData(savedatabytes);
+        launcherDat.ReadLauncherData(launcerbytes);
+        launcherDat.ReadSaveData(savedatabytes);
+        launcherDat.DisplayFoldersAndTitles();
+       File.WriteAllBytes(savedataFilePath, savedatabytes);
+     File.WriteAllBytes(launcherDatFilePath, launcerbytes);
     }
 }

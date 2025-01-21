@@ -4,168 +4,162 @@ using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Controls.Primitives;
 
 namespace HomeMenuEditor3DSUI
 {
     public partial class MainWindow : Window, INotifyPropertyChanged
     {
-        public ObservableCollection<TitleViewModel> titles { get; set; }
+        public ObservableCollection<SlotViewModel> Slots { get; set; }
         public string launcherDatFilePath = "C:\\Users\\oussama\\Desktop\\Launcher.dat";
         public string savedataFilePath = "C:\\Users\\oussama\\Desktop\\SaveData.dat";
         public static string SMDH_Directory_Path = "C:\\Users\\oussama\\Desktop\\icondata";
-        public ObservableCollection<TitleViewModel> Titles
-        {
-            
-            get { return titles; }
-            set { titles = value; OnPropertyChanged("Titles"); }
-        }
-
-        private int columnCount;
-        public int ColumnCount
-        {
-            get { return columnCount; }
-            set { columnCount = value; OnPropertyChanged("ColumnCount"); }
-        }
-
-        private int rowCount;
-        public int RowCount
-        {
-            get { return rowCount; }
-            set { rowCount = value; OnPropertyChanged("RowCount"); }
-        }
-
-        private double iconSize;
-        public double IconSize
-        {
-            get { return iconSize; }
-            set { iconSize = value; OnPropertyChanged("IconSize"); }
-        }
-
-        private TitleViewModel selectedTitle;
         private DataParser dataParser;
-
-        public event PropertyChangedEventHandler PropertyChanged;
-
+        byte[] launcherbytes ;
+        byte[] savedatabytes;
         public MainWindow()
         {
             InitializeComponent();
             DataContext = this;
             dataParser = new DataParser();
             LoadTitles();
-            CalculateGridSize();
         }
-      
 
-    private void LoadTitles()
+        private void LoadTitles()
         {
-            Titles = new ObservableCollection<TitleViewModel>();
+            Slots = new ObservableCollection<SlotViewModel>();
 
-            byte[] launcerbytes = File.ReadAllBytes(launcherDatFilePath);
-            byte[] savedatabytes = File.ReadAllBytes(savedataFilePath);
-            dataParser.ReadData(launcerbytes, savedatabytes);
+            // Load the data
+             launcherbytes = File.ReadAllBytes(launcherDatFilePath);
+             savedatabytes = File.ReadAllBytes(savedataFilePath);
+            dataParser.ReadData(launcherbytes, savedatabytes);
+            dataParser.ExtractSmallIconsFromSMDH(SMDH_Directory_Path);
 
+            // Combine all titles and folders into a single list with positions
+            var allItems = new List<(int Position, SlotViewModel Slot)>();
 
-            foreach (Title title in dataParser.SystemTitles)
+            // Add system titles
+            foreach (var title in dataParser.SystemTitles)
             {
-                Titles.Add(new TitleViewModel { Title = title });
+                if (title.Position >= 0 && title.Position < 60)
+                {
+                    allItems.Add((title.Position, new SlotViewModel { Title = title }));
+                }
             }
 
-            foreach (Title title in dataParser.SDTitles)
+            // Add SD titles
+            foreach (var title in dataParser.SDTitles)
             {
-                AddOrUpdateTitleViewModel(new TitleViewModel { Title = title });
+                if (title.Position >= 0 && title.Position < 60)
+                {
+                    allItems.Add((title.Position, new SlotViewModel { Title = title }));
+                }
             }
+
+            // Add folders
+            foreach (var folder in dataParser.Folders)
+            {
+                if (folder.Position >= 0 && folder.Position < 60)
+                {
+                    allItems.Add((folder.Position, new SlotViewModel { Folder = folder }));
+                }
+            }
+
+            // Fill Slots with empty placeholders
+            for (int i = 0; i < 60; i++)
+            {
+                Slots.Add(new SlotViewModel()); // Empty slot
+            }
+
+            // Place titles and folders into their positions
+            foreach (var item in allItems)
+            {
+                if (item.Position >= 0 && item.Position < Slots.Count)
+                {
+                    Slots[item.Position] = item.Slot;
+                }
+            }
+
+            OnPropertyChanged(nameof(Slots));
         }
 
-
-        private void AddOrUpdateTitleViewModel(TitleViewModel newViewModel)
+        // Save and Reload methods...
+        private void SaveButton_Click(object sender, RoutedEventArgs e)
         {
-            int index = Titles.IndexOf(Titles.FirstOrDefault(vm => vm.Title.Position == newViewModel.Title.Position));
-            if (index != -1)
+            try
             {
-                Titles[index] = newViewModel;
+                // Update the launcherbytes and savedatabytes arrays with the changes
+                dataParser.SaveLauncherData(launcherbytes);
+                dataParser.SaveSaveData(savedatabytes);
+
+                // Write the updated byte arrays back to the files
+                File.WriteAllBytes(launcherDatFilePath, launcherbytes);
+                File.WriteAllBytes(savedataFilePath, savedatabytes);
+
+                // Reload the byte arrays from the files
+                launcherbytes = File.ReadAllBytes(launcherDatFilePath);
+                savedatabytes = File.ReadAllBytes(savedataFilePath);
+
+                // Refresh the UI
+                ReloadButton_Click(null, null);
             }
-            else
+            catch (Exception ex)
             {
-                Titles.Add(newViewModel);
+                MessageBox.Show($"Error saving data: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
-
-        private string GetIconPath(string titleID)
+        private void ReloadButton_Click(object sender, RoutedEventArgs e)
         {
-            string iconFileName = $"{titleID}.jpg";
-            string iconPath = Path.Combine(SMDH_Directory_Path, iconFileName);
-
-            if (File.Exists(iconPath))
-            {
-                return iconPath;
-            }
-            else
-            {
-                return null;
-            }
+            Slots.Clear();
+            dataParser = new DataParser();
+            LoadTitles();
         }
 
-        private void OnPropertyChanged(string propertyName)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
 
+        // Title swapping logic
+        private SlotViewModel selectedTitle;
         private void TitleButton_Click(object sender, RoutedEventArgs e)
         {
-            var button = sender as Button;
+            var button = sender as FrameworkElement;
             if (button != null)
             {
-                var clickedTitle = button.DataContext as TitleViewModel;
-                if (clickedTitle != null)
+                var clickedSlot = button.DataContext as SlotViewModel;
+                if (clickedSlot != null)
                 {
                     if (selectedTitle == null)
                     {
-                        selectedTitle = clickedTitle;
+                        selectedTitle = clickedSlot;
                     }
                     else
                     {
-                        SwapTitles(clickedTitle);
+                        SwapSlots(selectedTitle, clickedSlot);
                         selectedTitle = null;
                     }
                 }
             }
         }
 
-        private void SwapTitles(TitleViewModel targetTitle)
+        private void SwapSlots(SlotViewModel slot1, SlotViewModel slot2)
         {
-            Title title1 = selectedTitle.Title;
-            Title title2 = targetTitle.Title;
+            // Implement swapping logic using dataParser
+            Title title1 = slot1.Title;
+            Title title2 = slot2.Title;
 
             dataParser.SwapTitles(title1, title2);
-            int index1 = Titles.IndexOf(selectedTitle);
-            int index2 = Titles.IndexOf(targetTitle);
+
+            // Swap the slots in the collection
+            int index1 = Slots.IndexOf(slot1);
+            int index2 = Slots.IndexOf(slot2);
             if (index1 >= 0 && index2 >= 0)
             {
-                TitleViewModel temp = Titles[index1];
-                Titles[index1] = Titles[index2];
-                Titles[index2] = temp;
+                Slots[index1] = slot2;
+                Slots[index2] = slot1;
             }
         }
 
-        private void CalculateGridSize()
-        {
-            for (int i = 0; i < 60; i++)
-            {
-            }
-        }
-        private void SaveButton_Click(object sender, RoutedEventArgs e)
-        {
-            dataParser.SaveSDTitlesToFile(savedataFilePath);
-            dataParser.SaveSystemTitlesToFile(launcherDatFilePath);
-        }
-        private void ReloadButton_Click(object sender, RoutedEventArgs e)
-        {
-            Titles.Clear();
-            dataParser = new();
-            LoadTitles();
-        }
+        // Implement INotifyPropertyChanged
+        public event PropertyChangedEventHandler PropertyChanged;
+        private void OnPropertyChanged(string propertyName) =>
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
 }

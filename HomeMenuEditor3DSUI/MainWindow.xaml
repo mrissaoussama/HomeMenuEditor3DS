@@ -1,42 +1,44 @@
 ﻿<Window x:Class="HomeMenuEditor3DSUI.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:HomeMenuEditor3DSUI"
-        mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="1580">
-    <StackPanel>
-        <Grid>
-            <ItemsControl Name="TitleGrid" ItemsSource="{Binding Titles}">
-                <ItemsControl.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <UniformGrid Columns="60"/>
-                        <!-- Set the desired number of columns -->
-                    </ItemsPanelTemplate>
-                </ItemsControl.ItemsPanel>
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                        <Button Width="24" Height="24" Click="TitleButton_Click">
-                            <Button.Template>
-                                <ControlTemplate TargetType="Button">
-                                    <Image Source="{Binding IconPath}" Stretch="UniformToFill"/>
-                                </ControlTemplate>
-                            </Button.Template>
-                        </Button>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
+        Title="Home Menu Editor 3DS" Height="600" Width="800">
+    <Window.Resources>
+        <!-- Data Templates for Titles and Folders -->
+        <DataTemplate x:Key="TitleTemplate" DataType="{x:Type local:SlotViewModel}">
+            <Button Width="50" Height="50" Click="TitleButton_Click">
+                <Image Source="{Binding IconPath}" Stretch="UniformToFill"/>
+            </Button>
+        </DataTemplate>
 
-            <!-- Save Button -->
-            <Button Content="Save" Click="SaveButton_Click" HorizontalAlignment="Center" VerticalAlignment="Bottom"/>
-            <Button Content="Reload" Click="ReloadButton_Click" HorizontalAlignment="Center" VerticalAlignment="Bottom"/>
-        </Grid>
+        <DataTemplate x:Key="FolderTemplate" DataType="{x:Type local:SlotViewModel}">
+            <Button Width="50" Height="50" Click="TitleButton_Click">
+                <TextBlock Text="F" HorizontalAlignment="Center" VerticalAlignment="Center"
+                           FontSize="24" FontWeight="Bold"/>
+            </Button>
+        </DataTemplate>
+
+        <!-- DataTemplateSelector -->
+        <local:SlotViewModelTemplateSelector x:Key="SlotTemplateSelector"
+                                             TitleTemplate="{StaticResource TitleTemplate}"
+                                             FolderTemplate="{StaticResource FolderTemplate}"/>
+    </Window.Resources>
+
+    <StackPanel>
+        <ItemsControl ItemsSource="{Binding Slots}"
+                      ItemTemplateSelector="{StaticResource SlotTemplateSelector}">
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <UniformGrid Columns="10"/>
+                    <!-- 10 columns -->
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+        </ItemsControl>
+
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Bottom">
-        <!-- Save Button -->
-        <Button Content="Save" Click="SaveButton_Click"/>
-        <!-- Reload Button -->
-        <Button Content="Reload" Click="ReloadButton_Click"/>
+            <!-- Save and Reload Buttons -->
+            <Button Content="Save" Click="SaveButton_Click" Margin="5"/>
+            <Button Content="Reload" Click="ReloadButton_Click" Margin="5"/>
         </StackPanel>
     </StackPanel>
 </Window>
