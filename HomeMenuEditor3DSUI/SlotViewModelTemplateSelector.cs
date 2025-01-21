@@ -13,7 +13,7 @@ namespace HomeMenuEditor3DSUI
             var slotViewModel = item as SlotViewModel;
             if (slotViewModel != null)
             {
-                if (slotViewModel.Folder != null)
+                if (slotViewModel.IsFolder)
                     return FolderTemplate;
                 else
                     return TitleTemplate;

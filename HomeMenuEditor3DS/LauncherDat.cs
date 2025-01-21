@@ -34,6 +34,9 @@ public class Title
         TitleID = titleID;
         Type = type;
     }
+    public override string ToString()
+    {return TitleHex+" " + Position+ " " + Folder; }
+
 }
 
 public class TitleFolder
@@ -51,7 +54,8 @@ public class TitleFolder
         FolderNumber = folderNumber;
         Position = position;
     }
-
+    public override string ToString()
+    { return Name + " " + Titles.Count + " " + Position; }
     public TitleFolder()
     {
     }
@@ -111,12 +115,6 @@ public class DataParser
         if (title1 == null || title2 == null)
             throw new ArgumentNullException("One or both titles are null.");
 
-        Console.WriteLine($"{title1.TitleID:X16} swapped with {title2.TitleID:X16}");
-
-        // Remove titles from their current folders or home menu
-        RemoveTitleFromFolder(title1);
-        RemoveTitleFromFolder(title2);
-
         // Swap positions
         int tempPosition = title1.Position;
         title1.Position = title2.Position;
@@ -127,28 +125,11 @@ public class DataParser
         title1.Folder = title2.Folder;
         title2.Folder = tempFolder;
 
-        // Add titles to their new folders or home menu
-        if (title1.Folder != null)
-        {
-            if (!title1.Folder.Titles.Contains(title1))
-                title1.Folder.Titles.Add(title1);
-        }
-        else
-        {
-            EnsureHomeMenuPositionIsUnique(title1);
-        }
+        // Update folder title lists
+        UpdateFolderTitleList(title1);
+        UpdateFolderTitleList(title2);
 
-        if (title2.Folder != null)
-        {
-            if (!title2.Folder.Titles.Contains(title2))
-                title2.Folder.Titles.Add(title2);
-        }
-        else
-        {
-            EnsureHomeMenuPositionIsUnique(title2);
-        }
-
-        // Update cardPosition if one of the titles is the card title
+        // Update cardPosition if necessary
         if (title1.IsCardTitle)
         {
             cardPosition = (ushort)title1.Position;
@@ -156,6 +137,24 @@ public class DataParser
         else if (title2.IsCardTitle)
         {
             cardPosition = (ushort)title2.Position;
+        }
+    }
+
+    public void UpdateFolderTitleList(Title title)
+    {
+        // Remove title from all folders
+        foreach (var folder in Folders)
+        {
+            folder.Titles.Remove(title);
+        }
+
+        // Add to the folder if it's in one
+        if (title.Folder != null)
+        {
+            if (!title.Folder.Titles.Contains(title))
+            {
+                title.Folder.Titles.Add(title);
+            }
         }
     }
 
@@ -208,15 +207,14 @@ public class DataParser
     {
         int position = title.Position;
 
-        // Get positions of all titles on home menu excluding the current title
         var occupiedPositions = SystemTitles
             .Where(t => t.Folder == null && t.Position >= 0 && t != title)
             .Select(t => t.Position)
+            .Union(SDTitles.Where(t => t.Folder == null && t.Position >= 0 && t != title).Select(t => t.Position))
             .ToList();
 
         if (occupiedPositions.Contains(position) || position < 0)
         {
-            // Find an unused position on the home menu
             int newPosition = GetUnusedHomeMenuPosition();
             if (newPosition == -1)
                 throw new Exception("No available positions on the home menu.");
@@ -224,6 +222,7 @@ public class DataParser
             title.Position = newPosition;
         }
     }
+
 
     public int GetUnusedHomeMenuPosition()
     {
@@ -622,13 +621,6 @@ public class DataParser
 
    
 
-    public void UpdateFolderTitleList(Title title)
-    {
-        if (title.Folder != null && !title.Folder.Titles.Contains(title))
-        {
-            title.Folder.Titles.Add(title);
-        }
-    }
 
     public uint GetNextFolderNumber()
     {
@@ -650,10 +642,11 @@ public class DataParser
 
     public bool PositionExists(short position)
     {
-        return SystemTitles.Any(t => t.Position == position) ||
-               SDTitles.Any(t => t.Position == position) ||
+        return SystemTitles.Any(t => t.Position == position && t.Folder == null) ||
+               SDTitles.Any(t => t.Position == position && t.Folder == null) ||
                Folders.Any(f => f.Position == position);
     }
+
 
     public int GetUnusedPositionInFolder(TitleFolder folder)
     {
@@ -671,4 +664,28 @@ public class DataParser
     {
         return SystemTitles.FirstOrDefault(t => t.IsCardTitle);
     }
+
+
+    public void MoveTitle(Title title, int newPosition, TitleFolder? newFolder)
+    {
+        if (title == null)
+            throw new ArgumentNullException(nameof(title));
+
+        // Remove title from its current folder
+        RemoveTitleFromFolder(title);
+
+        // Update position and folder
+        title.Position = newPosition;
+        title.Folder = newFolder;
+
+        if (newFolder != null)
+        {
+            // Add to the new folder's title list
+            if (!newFolder.Titles.Contains(title))
+            {
+                newFolder.Titles.Add(title);
+            }
+        }
+    }
+
 }

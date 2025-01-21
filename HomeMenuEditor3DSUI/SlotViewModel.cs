@@ -9,61 +9,77 @@ namespace HomeMenuEditor3DSUI
         private Title? title;
         public Title? Title
         {
-            get { return title; }
+            get => title;
             set
             {
                 if (title != value)
                 {
                     title = value;
-                    OnPropertyChanged("Title");
-                    OnPropertyChanged("IconPath");
+                    OnPropertyChanged(nameof(Title));
+                    OnPropertyChanged(nameof(IsEmpty));
+                    OnPropertyChanged(nameof(IsFolder));
+                    OnPropertyChanged(nameof(IconPath));
                 }
             }
         }
+
         private TitleFolder? folder;
         public TitleFolder? Folder
         {
-            get { return folder; }
+            get => folder;
             set
             {
                 if (folder != value)
                 {
                     folder = value;
-                    OnPropertyChanged("TitleFolder");
-                    OnPropertyChanged("IconPath");
+                    OnPropertyChanged(nameof(Folder));
+                    OnPropertyChanged(nameof(IsEmpty));
+                    OnPropertyChanged(nameof(IsFolder));
+                    OnPropertyChanged(nameof(IconPath));
                 }
             }
         }
 
+        public override string ToString()
+        {
+            if (folder is null)
+                return Title?.ToString(); return Folder?.ToString();
+        }
         public string IconPath
         {
             get { return GetIconPath(); }
         }
 
-     
+        public bool IsEmpty => Title == null && Folder == null;
         public bool IsFolder => Folder != null;
+
+        public string FolderInitial => Folder != null && !string.IsNullOrEmpty(Folder.Name) ? Folder.Name.Substring(0, 1).ToUpper() : "F";
 
         public event PropertyChangedEventHandler PropertyChanged;
         protected void OnPropertyChanged(string propertyName) =>
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-    
+
         private string GetIconPath()
-        {if(Folder!=null)
-                return Path.Combine(MainWindow.SMDH_Directory_Path, "folder.png");
+        {
             if (Title != null)
-            {if(Title.IsCardTitle)
+            {
+                if (Title.IsCardTitle)
                 {
-                    return Path.Combine(MainWindow.SMDH_Directory_Path, "cart.jpg");
+                    return Path.Combine(MainWindow.iconDataFolderPath, "cart.jpg");
 
                 }
-                var filename= $"{Title.TitleHex}.jpg";
-                var file = Path.Combine(MainWindow.SMDH_Directory_Path, filename);
-                if(File.Exists(file)) 
-                return file;
+                var filename = $"{Title.TitleHex}.jpg";
+                var file = Path.Combine(MainWindow.iconDataFolderPath, filename);
+                if (File.Exists(file))
+                    return file;
             }
-            
-                return Path.Combine(MainWindow.SMDH_Directory_Path, "noicon.jpg");
-            
+            if (Folder != null)
+                return Path.Combine(MainWindow.iconDataFolderPath, "folder.png");
+            if(Folder is null && Title is null)
+            return Path.Combine(MainWindow.iconDataFolderPath, "notitle.jpg");
+            else
+                return Path.Combine(MainWindow.iconDataFolderPath, "noicon.jpg");
+
         }
     }
 }
