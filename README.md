@@ -16,6 +16,7 @@ instructions:
 plans:
 - fix bugs
 - add swapping between two folders
+- create,move and delete folders (code is there but not fully tested)
 - sort titles or group them in folders using a title database (by developer,genre ect)
 - figure out how to install devkitpro and make it work with visual studio/visual studio code
 - make a simpler homebrew version of this with sort/group presets and easier import/export of both dat files and smdh files.
