@@ -6,7 +6,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-
+using System.Xml.Serialization;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 public enum TitleType
 {
     System,
@@ -29,6 +31,15 @@ public class Title
         Type = type;
     }
 
+    public string? Name { get; set; }
+    public string? Size { get; set; }
+    public string? Publisher { get; set; }
+    public string? ProductCode { get; set; }
+    public string? Genre { get; set; }
+    public string? SubGenre { get; set; }
+    public string? Description { get; set; }
+    public string? Region { get; set; }
+
     public Title(ulong titleID, TitleType type)
     {
         TitleID = titleID;
@@ -37,6 +48,91 @@ public class Title
     public override string ToString()
     {return TitleHex+" " + Position+ " " + Folder; }
 
+}
+
+[XmlRoot("datafile")]
+public class GameDatabase
+{
+    [XmlElement("game")]
+    public List<GameXmlInfo> Games { get; set; }
+
+    [XmlElement("genres")]
+    public Genres Genres { get; set; }
+}
+
+public class GameXmlInfo
+{
+    [XmlAttribute("name")]
+    public string Name { get; set; }
+
+    [XmlElement("id")]
+    public string Id { get; set; }
+
+    [XmlElement("region")]
+    public string Region { get; set; }
+
+    [XmlElement("locale")]
+    public List<Locale> Locale { get; set; }
+
+    [XmlElement("publisher")]
+    public string Publisher { get; set; }
+    [XmlElement("genre")]
+    public string Genre { get; set; }
+
+    [XmlElement("genres")]
+    public GameGenres Genres { get; set; }
+}
+
+public class GameGenres
+{
+    [XmlElement("genre")]
+    public string Genre { get; set; }
+   
+    [XmlElement("subgenre")]
+    public string SubGenre { get; set; }
+}
+public class Locale
+{
+    [XmlAttribute("lang")]
+    public string Lang { get; set; }
+
+    [XmlElement("title")]
+    public string Title { get; set; }
+
+    [XmlElement("synopsis")]
+    public string Synopsis { get; set; }
+}
+
+public class Genres
+{
+    [XmlElement("maingenre")]
+    public List<MainGenre> MainGenres { get; set; }
+}
+
+public class MainGenre
+{
+    [XmlAttribute("name")]
+    public string Name { get; set; }
+
+    [XmlElement("subgenre")]
+    public List<SubGenre> SubGenres { get; set; }
+}
+
+public class SubGenre
+{
+    [XmlAttribute("name")]
+    public string Name { get; set; }
+}
+public class GameInfo
+{
+    public string Name { get; set; }
+    public string UID { get; set; }
+    public string TitleID { get; set; }
+    public string Version { get; set; }
+    public string Size { get; set; }
+    [JsonPropertyName("Product Code")]
+    public string ProductCode { get; set; }
+    public string Publisher { get; set; }
 }
 
 public class TitleFolder
@@ -88,7 +184,49 @@ public class DataParser
     public List<Title> SystemTitles { get; set; }
     public List<Title> SDTitles { get; private set; }
     public List<TitleFolder> Folders { get; private set; }
+    // Make gameInfoList and gameXmlInfoList static
+    private static List<GameInfo> gameInfoList;
+    private static List<GameXmlInfo> gameXmlInfoList;
 
+    // Modify LoadGameInfo method to be static
+    public static void LoadGameInfo(params string[] jsonPaths)
+    {
+        if (gameInfoList == null)
+            gameInfoList = new List<GameInfo>();
+
+        foreach (var jsonPath in jsonPaths)
+        {
+            if (File.Exists(jsonPath))
+            {
+                var jsonContent = File.ReadAllText(jsonPath);
+                var games = JsonSerializer.Deserialize<List<GameInfo>>(jsonContent);
+                if (games != null)
+                {
+                    gameInfoList.AddRange(games);
+                }
+            }
+            else
+            {
+                Console.WriteLine($"Warning: JSON file not found - {jsonPath}");
+            }
+        }
+    }
+
+    // Modify LoadGameDatabase method to be static
+    public static void LoadGameDatabase(string xmlPath)
+    {
+        if (File.Exists(xmlPath))
+        {
+            var serializer = new XmlSerializer(typeof(GameDatabase));
+            using var reader = new StreamReader(xmlPath);
+            var gameDatabase = (GameDatabase)serializer.Deserialize(reader);
+            gameXmlInfoList = gameDatabase.Games;
+        }
+        else
+        {
+            Console.WriteLine($"Warning: XML file not found - {xmlPath}");
+        }
+    }
     public DataParser()
     {
         SDTitles = new List<Title>();
@@ -99,9 +237,168 @@ public class DataParser
         {
             Folders.Add(new TitleFolder());
         }
+        string exeDir = AppDomain.CurrentDomain.BaseDirectory;
+
+        // Load XML database
+        string xmlPath = Directory.GetFiles(exeDir, "*.xml").FirstOrDefault();
+        if (xmlPath != null)
+        {
+            LoadGameDatabase(xmlPath);
+        }
+        else
+        {
+            Console.WriteLine("No XML game database file found.");
+        }
+
+        // Find JSON files in the current directory with the pattern "list*.json"
+        var jsonFiles = Directory.GetFiles(exeDir, "list*.json");
+        if (jsonFiles.Length > 0)
+        {
+            LoadGameInfo(jsonFiles);
+        }
+        else
+        {
+            Console.WriteLine("No JSON game info files found.");
+        }
+    }
+    // Public methods
+
+    public void SortAllTitlesByTitleID()
+    {
+        // Get the folders that are on the home menu
+        var foldersOnHomeMenu = Folders
+            .Where(f => f.Position >= 0 && !string.IsNullOrEmpty(f.Name))
+            .OrderBy(f => f.Name)
+            .ToList();
+
+        // Exclude titles that are in folders or are card titles
+        var allTitles = SystemTitles.Concat(SDTitles)
+            .Where(t => t.Folder == null && t.Position >= 0 && !t.IsCardTitle && t.TitleID != ulong.MaxValue)
+            .OrderBy(t => t.TitleID)
+            .ToList();
+
+        int position = 0;
+
+        // Place folders first, ordered alphabetically
+        foreach (var folder in foldersOnHomeMenu)
+        {
+            // Skip the card position if necessary
+            if (position == cardPosition)
+            {
+                position++;
+            }
+            folder.Position = (short)position;
+            position++;
+        }
+
+        // Place titles next, ordered by Title ID
+        foreach (var title in allTitles)
+        {
+            // Skip the card position if necessary
+            if (position == cardPosition)
+            {
+                position++;
+            }
+            title.Position = position;
+            position++;
+        }
+
+        // Ensure the card title maintains its position
+        var cardTitle = GetCardTitle();
+        if (cardTitle != null)
+        {
+            cardTitle.Position = cardPosition;
+        }
     }
 
-    // Public methods
+    public void SortFolderTitlesByTitleID(TitleFolder folder)
+    {
+        if (folder == null)
+            throw new ArgumentNullException(nameof(folder));
+
+        var sortedTitles = folder.Titles
+            .OrderBy(t => t.TitleID)
+            .ToList();
+
+        int position = 0;
+        foreach (var title in sortedTitles)
+        {
+            title.Position = position;
+            position++;
+        }
+
+        // Update the folder's titles
+        folder.Titles = sortedTitles;
+    }
+    public void SortAllTitlesBy<TKey>(Func<Title, TKey> keySelector)
+    {
+        // Get the folders that are on the home menu
+        var foldersOnHomeMenu = Folders
+            .Where(f => f.Position >= 0 && !string.IsNullOrEmpty(f.Name))
+            .OrderBy(f => f.Name)
+            .ToList();
+
+        // Exclude titles that are in folders or are card titles
+        var allTitles = SystemTitles.Concat(SDTitles)
+            .Where(t => t.Folder == null && t.Position >= 0 && !t.IsCardTitle && t.TitleID != ulong.MaxValue)
+            .OrderBy(keySelector)
+            .ThenBy(t => t.TitleID)
+            .ToList();
+
+        int position = 0;
+
+        // Place folders first, ordered alphabetically
+        foreach (var folder in foldersOnHomeMenu)
+        {
+            // Skip the card position if necessary
+            if (position == cardPosition)
+            {
+                position++;
+            }
+            folder.Position = (short)position;
+            position++;
+        }
+
+        // Place titles next, ordered by the selected key
+        foreach (var title in allTitles)
+        {
+            // Skip the card position if necessary
+            if (position == cardPosition)
+            {
+                position++;
+            }
+            title.Position = position;
+            position++;
+        }
+
+        // Ensure the card title maintains its position
+        var cardTitle = GetCardTitle();
+        if (cardTitle != null)
+        {
+            cardTitle.Position = cardPosition;
+        }
+    }
+
+    public void SortFolderTitlesBy<TKey>(TitleFolder folder, Func<Title, TKey> keySelector)
+    {
+        if (folder == null)
+            throw new ArgumentNullException(nameof(folder));
+
+        var sortedTitles = folder.Titles
+            .OrderBy(keySelector)
+            .ThenBy(t => t.TitleID)
+            .ToList();
+
+        int position = 0;
+        foreach (var title in sortedTitles)
+        {
+            title.Position = position;
+            position++;
+        }
+
+        // Update the folder's titles
+        folder.Titles = sortedTitles;
+    }
 
     public void ReadData(byte[] launcherData, byte[] saveData)
     {
@@ -537,6 +834,65 @@ public class DataParser
                 folder.Titles.Add(SDTitles[i]);
                 SDTitles[i].Folder = folder;
             }
+        }
+        foreach (var title in SDTitles)
+        {
+            EnrichTitleInfo(title);
+        }
+    }
+    private void EnrichTitleInfo(Title title)
+    {
+        string titleIdHex = title.TitleID.ToString("X16");
+
+        // Find game info from JSON using TitleID
+        var gameInfo = gameInfoList?.FirstOrDefault(g => g.TitleID.Equals(titleIdHex, StringComparison.OrdinalIgnoreCase));
+        if (gameInfo != null)
+        {
+            title.Name = gameInfo.Name;
+            title.Size = gameInfo.Size;
+            title.Publisher = gameInfo.Publisher;
+            title.ProductCode = gameInfo.ProductCode;
+
+            // Extract the last part of the Product Code for XML lookup
+            var productId = gameInfo.ProductCode?.Split('-').Last();
+
+            // Find game info from XML using Product Code ID
+            var gameXmlInfo = gameXmlInfoList?.FirstOrDefault(g => g.Id.Equals(productId, StringComparison.OrdinalIgnoreCase));
+            if (gameXmlInfo != null)
+            {
+                title.Region = gameXmlInfo.Region;
+
+                // Assign Genre and SubGenre from the genre string
+                if (!string.IsNullOrEmpty(gameXmlInfo.Genre))
+                {
+                    var genres = gameXmlInfo.Genre.Split(',');
+                    if (genres.Length > 0)
+                        title.Genre = genres[0];
+                    if (genres.Length > 1)
+                        title.SubGenre = genres[1];
+                }
+
+                // Try to get 'EN' locale, if not available, pick the first available
+                var locale = gameXmlInfo.Locale?.FirstOrDefault(l => l.Lang.Equals("EN", StringComparison.OrdinalIgnoreCase))
+                              ?? gameXmlInfo.Locale?.FirstOrDefault();
+
+                if (locale != null)
+                {
+                    title.Description = locale.Synopsis.Replace(System.Environment.NewLine, " "); ;
+                }
+                else
+                {
+                    Console.WriteLine($"Locale not found for Title {title.TitleHex}");
+                }
+            }
+            else
+            {
+                Console.WriteLine($"XML info not found for Product Code ID: {productId}");
+            }
+        }
+        else
+        {
+            Console.WriteLine($"Game info not found for Title ID: {titleIdHex}");
         }
     }
 

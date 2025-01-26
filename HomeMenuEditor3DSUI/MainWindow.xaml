@@ -4,7 +4,8 @@
         xmlns:local="clr-namespace:HomeMenuEditor3DSUI"
         Title="Home Menu Editor 3DS" Height="800" Width="1000">
     <Window.Resources>
-        <!-- SectionGroupBox Style -->
+        <local:TruncateConverter x:Key="TruncateConverter"/>
+
         <Style x:Key="SectionGroupBox" TargetType="GroupBox">
             <Setter Property="Margin" Value="5"/>
             <Setter Property="Padding" Value="5"/>
@@ -71,13 +72,25 @@
             </StackPanel>
             <StackPanel Orientation="Horizontal" Margin="5">
                 <Button Content="Load Titles" Click="LoadButton_Click" Width="100"/>
+                <Button Content="Save" Click="SaveButton_Click" Margin="5" Width="80"/>
+                <Button Content="Reload" Click="ReloadButton_Click" Margin="5" Width="80"/>
             </StackPanel>
+     
         </StackPanel>
 
         <!-- Main Slots Area (Left Column) -->
         <GroupBox Grid.Row="1" Grid.Column="0" Style="{StaticResource SectionGroupBox}" Header="All Titles">
+          
             <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                 <StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <Button Content="Sort by Title ID" Click="SortAllTitlesByTitleIDButton_Click" Margin="2" Width="140"/>
+                    <Button Content="Sort by Name" Click="SortAllTitlesByNameButton_Click" Margin="2" Width="140"/>
+                    <Button Content="Sort by Size" Click="SortAllTitlesBySizeButton_Click" Margin="2" Width="140"/>
+                    <Button Content="Sort by Publisher" Click="SortAllTitlesByPublisherButton_Click" Margin="2" Width="140"/>
+                        <Button Content="Sort by Genre" Click="SortAllTitlesByGenreButton_Click" Margin="2" Width="140"/>
+                    </StackPanel>
+
                     <!-- ItemsControl for each group of 60 slots -->
                     <ItemsControl ItemsSource="{Binding SlotGroups}">
                         <ItemsControl.ItemTemplate>
@@ -104,15 +117,48 @@
             <GroupBox Style="{StaticResource SectionGroupBox}" Header="Selected Title">
                 <StackPanel>
                     <ContentControl Content="{Binding SelectedSlot}" ContentTemplateSelector="{StaticResource SlotTemplateSelector}" Margin="5"/>
-                    <Label Content="{Binding SelectedSlot.Title.TitleHex}" Margin="5"/>
+
+                    <!-- New labels to display title information -->
+                    <Label Content="Title ID:" FontWeight="Bold" Margin="5,0,0,5"/>
+                    <TextBlock Text="{Binding SelectedSlot.Title.TitleHex}" Margin="5,0,0,10"/>
+
+                    <Label Content="Name:" FontWeight="Bold" Margin="5,0,0,0"/>
+                    <TextBlock Text="{Binding SelectedSlot.Title.Name}" Margin="5,0,0,10"/>
+
+                    <Label Content="Size:" FontWeight="Bold" Margin="5,0,0,0"/>
+                    <TextBlock Text="{Binding SelectedSlot.Title.Size}" Margin="5,0,0,10"/>
+
+                    <Label Content="Publisher:" FontWeight="Bold" Margin="5,0,0,0"/>
+                    <TextBlock Text="{Binding SelectedSlot.Title.Publisher}" Margin="5,0,0,10"/>
+
+                    <Label Content="Genre:" FontWeight="Bold" Margin="5,0,0,0"/>
+                    <TextBlock Text="{Binding SelectedSlot.Title.Genre}" Margin="5,0,0,10"/>
+
+                    <Label Content="SubGenre:" FontWeight="Bold" Margin="5,0,0,0"/>
+                    <TextBlock Text="{Binding SelectedSlot.Title.SubGenre}" Margin="5,0,0,10"/>
+
+
+                    <Label Content="Description:" FontWeight="Bold" />
+                    <TextBlock Text="{Binding SelectedSlot.Title.Description, Converter={StaticResource TruncateConverter}, ConverterParameter=200}"
+                   TextWrapping="Wrap" />
+
+                    <!-- Clear Selection Button -->
                     <Button Content="Clear Selection" Click="ClearSelectionButton_Click" Margin="5" Width="120"/>
                 </StackPanel>
             </GroupBox>
 
             <!-- Folder Content Area -->
             <GroupBox Style="{StaticResource SectionGroupBox}" Header="{Binding CurrentFolder.Name}" Visibility="{Binding IsFolderContentVisible, Converter={StaticResource BoolToVisConverter}}">
-                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+              
+                <ScrollViewer VerticalScrollBarVisibility="Auto"  HorizontalScrollBarVisibility="Disabled">
                     <StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <Button Content="Sort by Title ID" Click="SortFolderByTitleIDButton_Click" Margin="2" Width="140"/>
+                        <Button Content="Sort by Name" Click="SortFolderByNameButton_Click" Margin="2" Width="140"/>
+                        <Button Content="Sort by Size" Click="SortFolderBySizeButton_Click" Margin="2" Width="140"/>
+                        <Button Content="Sort by Publisher" Click="SortFolderByPublisherButton_Click" Margin="2" Width="140"/>
+                        <Button Content="Sort by Genre" Click="SortFolderByGenreButton_Click" Margin="2" Width="140"/>
+                          </StackPanel>
                         <ItemsControl ItemsSource="{Binding CurrentFolderSlots}" ItemTemplateSelector="{StaticResource SlotTemplateSelector}">
                             <ItemsControl.ItemsPanel>
                                 <ItemsPanelTemplate>
@@ -125,10 +171,7 @@
             </GroupBox>
 
             <!-- Save and Reload Buttons -->
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,20,0,10">
-                <Button Content="Save" Click="SaveButton_Click" Margin="5" Width="80"/>
-                <Button Content="Reload" Click="ReloadButton_Click" Margin="5" Width="80"/>
-            </StackPanel>
+          
         </StackPanel>
     </Grid>
 </Window>

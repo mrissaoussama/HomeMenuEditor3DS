@@ -119,6 +119,187 @@ namespace HomeMenuEditor3DSUI
                 System.Windows.MessageBox.Show($"Error saving config: {ex.Message}", "Config Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
+        private void SortAllTitlesButton_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                dataParser.SortAllTitlesByTitleID();
+              SaveButton_Click(null, null);
+                ReloadButton_Click(null, null);
+            }
+            catch (Exception ex)
+            {
+            }
+        }
+        private void SortFolderButton_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                if (CurrentFolder != null)
+                {
+                    dataParser.SortFolderTitlesByTitleID(CurrentFolder);
+                    SaveButton_Click(null, null);
+                    LoadFolderContents(CurrentFolder);
+               
+                }
+            }
+            catch (Exception ex)
+            {
+            }
+        }
+        private void SortAllTitlesByTitleIDButton_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                dataParser.SortAllTitlesBy(t => t.TitleID);
+                SaveButton_Click(null, null);
+                ReloadButton_Click(null, null);
+            }
+            catch (Exception ex)
+            {
+                // Handle exception
+            }
+        }
+
+        private void SortAllTitlesByNameButton_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                dataParser.SortAllTitlesBy(t => t.Name);
+                SaveButton_Click(null, null);
+                ReloadButton_Click(null, null);
+            }
+            catch (Exception ex)
+            {
+                // Handle exception
+            }
+        }
+
+        private void SortAllTitlesBySizeButton_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                dataParser.SortAllTitlesBy(t => t.Size);
+                SaveButton_Click(null, null);
+                ReloadButton_Click(null, null);
+            }
+            catch (Exception ex)
+            {
+                // Handle exception
+            }
+        }
+
+        private void SortAllTitlesByPublisherButton_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                dataParser.SortAllTitlesBy(t => t.Publisher);
+                SaveButton_Click(null, null);
+                ReloadButton_Click(null, null);
+            }
+            catch (Exception ex)
+            {
+                // Handle exception
+            }
+        }
+
+        private void SortAllTitlesByGenreButton_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                dataParser.SortAllTitlesBy(t => t.Genre);
+                SaveButton_Click(null, null);
+                ReloadButton_Click(null, null);
+            }
+            catch (Exception ex)
+            {
+                // Handle exception
+            }
+        }
+        private void SortFolderByTitleIDButton_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                if (CurrentFolder != null)
+                {
+                    dataParser.SortFolderTitlesBy(CurrentFolder, t => t.TitleID);
+                    SaveButton_Click(null, null);
+                    LoadFolderContents(CurrentFolder);
+                }
+            }
+            catch (Exception ex)
+            {
+                // Handle exception
+            }
+        }
+
+        private void SortFolderByNameButton_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                if (CurrentFolder != null)
+                {
+                    dataParser.SortFolderTitlesBy(CurrentFolder, t => t.Name);
+                    SaveButton_Click(null, null);
+                    LoadFolderContents(CurrentFolder);
+                }
+            }
+            catch (Exception ex)
+            {
+                // Handle exception
+            }
+        }
+
+        private void SortFolderBySizeButton_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                if (CurrentFolder != null)
+                {
+                    dataParser.SortFolderTitlesBy(CurrentFolder, t => t.Size);
+                    SaveButton_Click(null, null);
+                    LoadFolderContents(CurrentFolder);
+                }
+            }
+            catch (Exception ex)
+            {
+                // Handle exception
+            }
+        }
+
+        private void SortFolderByPublisherButton_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                if (CurrentFolder != null)
+                {
+                    dataParser.SortFolderTitlesBy(CurrentFolder, t => t.Publisher);
+                    SaveButton_Click(null, null);
+                    LoadFolderContents(CurrentFolder);
+                }
+            }
+            catch (Exception ex)
+            {
+                // Handle exception
+            }
+        }
+
+        private void SortFolderByGenreButton_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                if (CurrentFolder != null)
+                {
+                    dataParser.SortFolderTitlesBy(CurrentFolder, t => t.Genre);
+                    SaveButton_Click(null, null);
+                    LoadFolderContents(CurrentFolder);
+                }
+            }
+            catch (Exception ex)
+            {
+                // Handle exception
+            }
+        }
 
         private void LoadTitles()
         {

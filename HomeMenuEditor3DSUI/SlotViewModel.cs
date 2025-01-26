@@ -2,6 +2,8 @@
 using System.ComponentModel;
 using System.IO;
 
+
+
 namespace HomeMenuEditor3DSUI
 {
     public class SlotViewModel : INotifyPropertyChanged
@@ -42,9 +44,14 @@ namespace HomeMenuEditor3DSUI
 
         public override string ToString()
         {
-            if (folder is null)
-                return Title?.ToString(); return Folder?.ToString();
+            if (Folder != null)
+                return Folder.ToString();
+            else if (Title != null)
+                return Title.ToString();
+            else
+                return base.ToString();
         }
+
         public string IconPath
         {
             get { return GetIconPath(); }
@@ -66,7 +73,6 @@ namespace HomeMenuEditor3DSUI
                 if (Title.IsCardTitle)
                 {
                     return Path.Combine(MainWindow.iconDataFolderPath, "cart.jpg");
-
                 }
                 var filename = $"{Title.TitleHex}.jpg";
                 var file = Path.Combine(MainWindow.iconDataFolderPath, filename);
@@ -75,11 +81,10 @@ namespace HomeMenuEditor3DSUI
             }
             if (Folder != null)
                 return Path.Combine(MainWindow.iconDataFolderPath, "folder.png");
-            if(Folder is null && Title is null)
-            return Path.Combine(MainWindow.iconDataFolderPath, "notitle.jpg");
+            if (Folder == null && Title == null)
+                return Path.Combine(MainWindow.iconDataFolderPath, "notitle.jpg");
             else
                 return Path.Combine(MainWindow.iconDataFolderPath, "noicon.jpg");
-
         }
     }
 }
