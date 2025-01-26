@@ -71,9 +71,14 @@
                 <Label Content="{Binding iconDataFolderPath}" VerticalAlignment="Center"/>
             </StackPanel>
             <StackPanel Orientation="Horizontal" Margin="5">
+                
                 <Button Content="Load Titles" Click="LoadButton_Click" Width="100"/>
                 <Button Content="Save" Click="SaveButton_Click" Margin="5" Width="80"/>
                 <Button Content="Reload" Click="ReloadButton_Click" Margin="5" Width="80"/>
+                <Button Content="Create Folder" Click="CreateFolderButton_Click" Width="120"/>
+                <Button Content="Rename Folder" Click="RenameFolderButton_Click" Margin="5" Width="120"/>
+
+
             </StackPanel>
      
         </StackPanel>

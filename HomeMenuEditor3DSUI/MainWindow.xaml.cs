@@ -9,7 +9,8 @@ using System.IO;
 using System.Linq;
 using System.Windows; 
 using System.Reflection;
-using System.Text.Json;   // For exe path
+using System.Text.Json;
+using Microsoft.VisualBasic;   // For exe path
 
 namespace HomeMenuEditor3DSUI
 {
@@ -431,9 +432,98 @@ namespace HomeMenuEditor3DSUI
             OnPropertyChanged(nameof(CurrentFolderSlots));
             OnPropertyChanged(nameof(IsFolderContentVisible));
         }
+        private void CreateFolderButton_Click(object sender, RoutedEventArgs e)
+        {
+            // Prompt the user for the folder name
+            string folderName = PromptForFolderName("Enter Folder Name:");
 
-        // Title swapping logic
-        private void TitleButton_Click(object sender, RoutedEventArgs e)
+            if (!string.IsNullOrEmpty(folderName))
+            {
+                try
+                {
+                    // Find an empty position on the home menu
+                    short position = dataParser.GetUnusedPosition();
+                    if (position == -1)
+                    {
+                        MessageBox.Show("No available positions to create a new folder.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                        return;
+                    }
+
+                    // Create the folder
+                    TitleFolder newFolder = dataParser.CreateFolder(folderName, position);
+                    SaveButton_Click(null, null);
+                    // Update the UI
+                    ReloadButton_Click(null, null);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Error creating folder: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+        }
+        private void RenameFolderButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (CurrentFolder != null)
+            {
+                string currentName = CurrentFolder.Name;
+                string newName = PromptForFolderName($"Rename Folder (Current Name: {currentName}):");
+
+                if (!string.IsNullOrEmpty(newName))
+                {
+                    try
+                    {
+                        dataParser.RenameFolder(CurrentFolder.FolderNumber, newName);
+                        SaveButton_Click(null, null);
+                        ReloadButton_Click(null, null);
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"Error renaming folder: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
+                }
+            }
+            else
+            {
+                MessageBox.Show("Please select a folder to rename.", "Information", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+        }
+
+
+private string PromptForFolderName(string message)
+    {
+        const int maxChars = 17; // Maximum number of characters
+        string folderName = string.Empty;
+        bool isValid = false;
+
+        while (!isValid)
+        {
+            folderName = Interaction.InputBox($"{message}\n(Maximum {maxChars} characters)", "Folder Name", "");
+
+            if (string.IsNullOrEmpty(folderName))
+            {
+                // User cancelled or entered an empty string
+                break;
+            }
+
+            // Use StringInfo to handle surrogate pairs
+            int textElementCount = new System.Globalization.StringInfo(folderName).LengthInTextElements;
+
+            if (textElementCount > maxChars)
+            {
+                MessageBox.Show($"Folder name cannot exceed {maxChars} characters.", "Name Too Long", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+            else
+            {
+                isValid = true;
+            }
+        }
+
+        return folderName;
+    }
+
+
+    // Title swapping logic
+    private void TitleButton_Click(object sender, RoutedEventArgs e)
         {
             var button = sender as System.Windows.Controls.Button;
             if (button != null)
