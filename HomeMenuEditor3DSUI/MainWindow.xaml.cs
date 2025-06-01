@@ -10,7 +10,8 @@ using System.Linq;
 using System.Windows; 
 using System.Reflection;
 using System.Text.Json;
-using Microsoft.VisualBasic;   // For exe path
+using Microsoft.VisualBasic;
+using System.Windows.Controls; 
 
 namespace HomeMenuEditor3DSUI
 {
@@ -768,5 +769,23 @@ private string PromptForFolderName(string message)
         {
             LoadTitles();
         }
+
+        private void TextBlock_MouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+
+            if (((TextBlock)sender).Text == string.Empty)
+                return;
+            else
+            {
+                try
+                {
+                    Clipboard.SetText(((TextBlock)sender).Text);
+                }
+                catch (Exception ex)
+                {
+                }
+            }
+        }
+       
     }
 }

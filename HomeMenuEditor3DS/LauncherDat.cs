@@ -876,9 +876,11 @@ public class DataParser
                 var locale = gameXmlInfo.Locale?.FirstOrDefault(l => l.Lang.Equals("EN", StringComparison.OrdinalIgnoreCase))
                               ?? gameXmlInfo.Locale?.FirstOrDefault();
 
-                if (locale != null)
+                if (locale != null && !string.IsNullOrEmpty(locale.Synopsis))
                 {
-                    title.Description = locale.Synopsis.Replace(System.Environment.NewLine, " "); ;
+                    title.Description = locale.Synopsis.Replace(System.Environment.NewLine, " ");
+                    title.Description = title.Description.Replace("\n", " ");
+
                 }
                 else
                 {

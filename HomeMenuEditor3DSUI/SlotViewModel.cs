@@ -60,7 +60,7 @@ namespace HomeMenuEditor3DSUI
         public bool IsEmpty => Title == null && Folder == null;
         public bool IsFolder => Folder != null;
 
-        public string FolderInitial => Folder != null && !string.IsNullOrEmpty(Folder.Name) ? Folder.Name.Substring(0, 1).ToUpper() : "F";
+        public string FolderInitial => Folder != null && !string.IsNullOrEmpty(Folder.Name) ? Folder.Name : "NoNAME";
 
         public event PropertyChangedEventHandler PropertyChanged;
         protected void OnPropertyChanged(string propertyName) =>
